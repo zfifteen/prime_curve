@@ -18,7 +18,7 @@ Dependencies:
 
 import numpy as np
 from sklearn.mixture import GaussianMixture
-from sympy import sieve
+from sympy import sieve, isprime
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -27,7 +27,7 @@ warnings.filterwarnings("ignore")
 # 1. Constants and primes
 # ------------------------------------------------------------------------------
 phi = (1 + np.sqrt(5)) / 2
-N_MAX = 20000
+N_MAX = 100  # Updated from 20,000 to 100,000
 primes_list = list(sieve.primerange(2, N_MAX + 1))
 
 # ------------------------------------------------------------------------------
@@ -145,3 +145,45 @@ for entry in valid_results[::10]:
     print(f" k={entry['k']:.3f} | enh={entry['max_enhancement']:.1f}%"
           f" | σ'={entry['sigma_prime']:.3f}"
           f" | Σ|b|={entry['fourier_b_sum']:.3f}")
+
+# ------------------------------------------------------------------------------
+# 5. Dynamically Compute and Validate Mersenne Primes
+# ------------------------------------------------------------------------------
+def compute_mersenne_primes(n_max):
+    primes = [p for p in sieve.primerange(2, n_max + 1)]
+    return [p for p in primes if isprime(2**p - 1)]
+
+mersenne_primes = compute_mersenne_primes(N_MAX)
+print("\nValidated Mersenne Prime Exponents:")
+print(", ".join(map(str, mersenne_primes)))
+
+# ------------------------------------------------------------------------------
+# 6. Statistical Summary of Mersenne Computation
+# ------------------------------------------------------------------------------
+def statistical_summary(primes, mersenne_primes):
+    total_primes = len(primes)
+    total_mersenne = len(mersenne_primes)
+    hit_rate = (total_mersenne / total_primes) * 100
+    miss_rate = 100 - hit_rate
+
+    print("\n=== Statistical Summary ===")
+    print(f"Total Primes Checked: {total_primes}")
+    print(f"Total Mersenne Primes Found: {total_mersenne}")
+    print(f"Hit Rate: {hit_rate:.2f}%")
+    print(f"Miss Rate: {miss_rate:.2f}%")
+
+    # Prime distribution stats
+    prime_array = np.array(primes)
+    print("\nPrime Distribution Statistics:")
+    print(f"Mean of Primes: {np.mean(prime_array):.2f}")
+    print(f"Median of Primes: {np.median(prime_array):.2f}")
+    print(f"Standard Deviation of Primes: {np.std(prime_array):.2f}")
+
+    # Mersenne growth analysis
+    mersenne_values = [(1 << p) - 1 for p in mersenne_primes]
+    print("\nMersenne Prime Growth:")
+    print(f"Smallest Mersenne Prime: {min(mersenne_values)}")
+    print(f"Largest Mersenne Prime: {max(mersenne_values)}")
+    print(f"Mersenne Growth Factor: {max(mersenne_values) / min(mersenne_values):.2f}")
+
+statistical_summary(primes_list, mersenne_primes)
