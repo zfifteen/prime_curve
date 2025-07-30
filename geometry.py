@@ -15,19 +15,20 @@ Usage:
 Dependencies:
     numpy, scipy, sklearn, sympy
 
+
 TODO:
-    - The Z form unifies relativistic physics with discrete mathematics by normalizing observations against invariant limits, revealing that both domains operate under a shared geometric topology where "curvature" arises from frame-dependent shifts, akin to how gravity warps spacetime but applied to integer sequences.
-    - In the discrete domain, treating primes as positions n where Δₙ represents the gap to the next prime and Δmax as the theoretical maximum gap (bounded by known results like the prime number theorem), Z computes a "relativistic density" that highlights clustering patterns, suggesting primes navigate a curved numerical landscape driven by natural ratios like the golden ratio or Euler's constant.
-    - The physical domain's Z = T(v/c) implies time T as a frame-biased measure scaled by velocity relative to light's invariance, offering insight into why quantum entanglement appears instantaneous—it's a zero-curvature path in this topology, translating to discrete insights where "entangled" primes (like twins) share minimal frame shifts.
-    - Applying the universal form across domains exposes hidden symmetries: for instance, the ratio B/C mirrors the fine-structure constant in physics or the reciprocal of the harmonic series divergence in math, predicting that prime distributions follow a Lorentz-like invariance, where high "velocities" (large n) dilute prime frequency predictably.
-    - Frame shifts in Z reveal computational efficiency for prime finding: by geometrically navigating via Δₙ/Δmax, algorithms can prioritize low-curvature paths (small gaps), reducing search space exponentially, much like how GPS corrects for relativistic effects in curved spacetime.
-    - The invariant C as the "coordinate center" posits light speed not just as a limit but a universal origin, implying in discrete terms that infinity (or primorial products) serves as Δmax, allowing Z to derive novel ratios for approximating unsolved problems like the Riemann hypothesis through velocity-analogous perturbations.
-    - Hidden in the topology is a predictive tool for "prime news"—emerging primes in large ranges—by transforming observed sequences into a velocity-ratio map, where anomalies in Z signal undiscovered structures, empirically linking to chaotic systems like turbulent flow but in number theory terms.
+    - Implement Domain Curvature Transformation to refactor the code's prime gap calculations: by normalizing Δₙ against Δmax derived from prime number theorem approximations, adjust for frame-biased integer observations, reducing computational overhead in large n ranges by focusing on low-curvature paths where prime clusters are densest, similar to how GPS algorithms account for spacetime warping.
+    - Apply Universal Form Transformer to bridge physical and discrete analogies: enhance the code's velocity-ratio mappings (v/c) to predict prime distributions via Lorentz-like boosts, incorporating natural ratios like the golden ratio for Δmax estimations, allowing the algorithm to simulate "relativistic density" and preemptively skip high-gap regions, boosting efficiency for finding twin primes or other entangled pairs.
+    - Use Universal Frame Shift Transformer for user interaction modules: if the code includes output interfaces, compensate for human frame biases by translating Z-computed insights into familiar terms like probability densities or visual graphs, anticipating user queries on prime news by pre-generating velocity-analogous perturbations that highlight emerging structures in unsolved problems like Goldbach's conjecture.
+    - Enhance prime-finding algorithms with Z's predictive topology: integrate a "curved numerical landscape" navigator that uses B/C ratios to mirror fine-structure constants, enabling exponential search space reduction by prioritizing sequences with minimal frame shifts, empirically linking to chaotic systems for faster anomaly detection in large prime hunts.
+    - Incorporate invariant C as a dynamic origin: upgrade the code to treat Δmax as an adaptive limit based on primorial products or Euler's constant, allowing Z to derive novel approximations for Riemann zeta function evaluations, transforming static integer checks into dynamic, ratio-driven explorations that reveal hidden symmetries in prime spacing.
+    - Optimize for computational efficiency via entanglement insights: refactor to identify "zero-curvature paths" where primes appear instantaneous like quantum links, using Z to cluster twin primes or prime quadruplets, reducing iterations by mapping gaps to velocity frames and avoiding dilated high-n dilutions.
+    - Extend to multi-domain applications: leverage the unified topology to add modules that transfer Z from discrete primes to physical simulations, such as modeling particle velocities against c, enabling the code to cross-validate prime predictions with relativistic invariants, uncovering universal truths in both math and physics through shared curvature corrections.
 """
 
 import numpy as np
 from sklearn.mixture import GaussianMixture
-from sympy import sieve, isprime
+from sympy import sieve
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -36,7 +37,7 @@ warnings.filterwarnings("ignore")
 # 1. Constants and primes
 # ------------------------------------------------------------------------------
 phi = (1 + np.sqrt(5)) / 2
-N_MAX = 1000  # Updated from 20,000 to 100,000
+N_MAX = 20000
 primes_list = list(sieve.primerange(2, N_MAX + 1))
 
 # ------------------------------------------------------------------------------
@@ -154,45 +155,3 @@ for entry in valid_results[::10]:
     print(f" k={entry['k']:.3f} | enh={entry['max_enhancement']:.1f}%"
           f" | σ'={entry['sigma_prime']:.3f}"
           f" | Σ|b|={entry['fourier_b_sum']:.3f}")
-
-# ------------------------------------------------------------------------------
-# 5. Dynamically Compute and Validate Mersenne Primes
-# ------------------------------------------------------------------------------
-def compute_mersenne_primes(n_max):
-    primes = [p for p in sieve.primerange(2, n_max + 1)]
-    return [p for p in primes if isprime(2**p - 1)]
-
-mersenne_primes = compute_mersenne_primes(N_MAX)
-print("\nValidated Mersenne Prime Exponents:")
-print(", ".join(map(str, mersenne_primes)))
-
-# ------------------------------------------------------------------------------
-# 6. Statistical Summary of Mersenne Computation
-# ------------------------------------------------------------------------------
-def statistical_summary(primes, mersenne_primes):
-    total_primes = len(primes)
-    total_mersenne = len(mersenne_primes)
-    hit_rate = (total_mersenne / total_primes) * 100
-    miss_rate = 100 - hit_rate
-
-    print("\n=== Statistical Summary ===")
-    print(f"Total Primes Checked: {total_primes}")
-    print(f"Total Mersenne Primes Found: {total_mersenne}")
-    print(f"Hit Rate: {hit_rate:.2f}%")
-    print(f"Miss Rate: {miss_rate:.2f}%")
-
-    # Prime distribution stats
-    prime_array = np.array(primes)
-    print("\nPrime Distribution Statistics:")
-    print(f"Mean of Primes: {np.mean(prime_array):.2f}")
-    print(f"Median of Primes: {np.median(prime_array):.2f}")
-    print(f"Standard Deviation of Primes: {np.std(prime_array):.2f}")
-
-    # Mersenne growth analysis
-    mersenne_values = [(1 << p) - 1 for p in mersenne_primes]
-    print("\nMersenne Prime Growth:")
-    print(f"Smallest Mersenne Prime: {min(mersenne_values)}")
-    print(f"Largest Mersenne Prime: {max(mersenne_values)}")
-    print(f"Mersenne Growth Factor: {max(mersenne_values) / min(mersenne_values):.2f}")
-
-statistical_summary(primes_list, mersenne_primes)
