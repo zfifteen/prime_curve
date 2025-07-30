@@ -12,7 +12,7 @@
 ```python
 import numpy as np
 from sklearn.mixture import GaussianMixture
-from sympy import sieve
+from sympy import sieve, isprime
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -21,14 +21,17 @@ warnings.filterwarnings("ignore")
 # 1. Constants and primes
 # ------------------------------------------------------------------------------
 phi = (1 + np.sqrt(5)) / 2
-N_MAX = 20000
+N_MAX = 1000  # Updated from 20,000 to 100,000
 primes_list = list(sieve.primerange(2, N_MAX + 1))
 
 # ------------------------------------------------------------------------------
 # 2. Core transforms and metrics
 # ------------------------------------------------------------------------------
+
 def frame_shift_residues(n_vals, k):
-    """ θ' = φ * ((n mod φ) / φ) ** k """
+    """
+    θ' = φ * ((n mod φ) / φ) ** k
+    """
     mod_phi = np.mod(n_vals, phi) / phi
     return phi * np.power(mod_phi, k)
 
@@ -40,10 +43,10 @@ def bin_densities(theta_all, theta_pr, nbins=20):
     """
     bins = np.linspace(0, phi, nbins + 1)
     all_counts, _ = np.histogram(theta_all, bins=bins)
-    pr_counts, _ = np.histogram(theta_pr, bins=bins)
+    pr_counts, _  = np.histogram(theta_pr,  bins=bins)
 
     all_d = all_counts / len(theta_all)
-    pr_d = pr_counts / len(theta_pr)
+    pr_d  = pr_counts  / len(theta_pr)
 
     # Compute enhancements safely
     with np.errstate(divide='ignore', invalid='ignore'):
@@ -82,12 +85,15 @@ def gmm_fit(theta_pr, n_components=5):
     Returns model and mean σ of components.
     """
     X = ((theta_pr % phi) / phi).reshape(-1, 1)
-    gm = GaussianMixture(n_components=n_components, covariance_type='full', random_state=0).fit(X)
-    sigmas = np.sqrt([gm.covariances_[i].flatten()[0] for i in range(n_components)])
+    gm = GaussianMixture(n_components=n_components,
+                         covariance_type='full',
+                         random_state=0).fit(X)
+    sigmas = np.sqrt([gm.covariances_[i].flatten()[0]
+                      for i in range(n_components)])
     return gm, np.mean(sigmas)
 
 # ------------------------------------------------------------------------------
-# 3. High-resolution k-sweep with NaN handling
+# 3. High-resolution k‐sweep with NaN handling
 # ------------------------------------------------------------------------------
 k_values = np.arange(0.2, 0.4001, 0.002)
 results = []
@@ -95,9 +101,9 @@ results = []
 for k in k_values:
     # Transform all n and primes
     theta_all = frame_shift_residues(np.arange(1, N_MAX + 1), k)
-    theta_pr = frame_shift_residues(np.array(primes_list), k)
+    theta_pr  = frame_shift_residues(np.array(primes_list), k)
 
-    # Bin density & compute enhancements
+    # Bin densities & compute enhancements
     all_d, pr_d, enh = bin_densities(theta_all, theta_pr, nbins=20)
     max_enh = np.max(enh)  # NaN → -inf masked
 
@@ -133,3 +139,45 @@ for entry in valid_results[::10]:
     print(f" k={entry['k']:.3f} | enh={entry['max_enhancement']:.1f}%"
           f" | σ'={entry['sigma_prime']:.3f}"
           f" | Σ|b|={entry['fourier_b_sum']:.3f}")
+
+# ------------------------------------------------------------------------------
+# 5. Dynamically Compute and Validate Mersenne Primes
+# ------------------------------------------------------------------------------
+def compute_mersenne_primes(n_max):
+    primes = [p for p in sieve.primerange(2, n_max + 1)]
+    return [p for p in primes if isprime(2**p - 1)]
+
+mersenne_primes = compute_mersenne_primes(N_MAX)
+print("\nValidated Mersenne Prime Exponents:")
+print(", ".join(map(str, mersenne_primes)))
+
+# ------------------------------------------------------------------------------
+# 6. Statistical Summary of Mersenne Computation
+# ------------------------------------------------------------------------------
+def statistical_summary(primes, mersenne_primes):
+    total_primes = len(primes)
+    total_mersenne = len(mersenne_primes)
+    hit_rate = (total_mersenne / total_primes) * 100
+    miss_rate = 100 - hit_rate
+
+    print("\n=== Statistical Summary ===")
+    print(f"Total Primes Checked: {total_primes}")
+    print(f"Total Mersenne Primes Found: {total_mersenne}")
+    print(f"Hit Rate: {hit_rate:.2f}%")
+    print(f"Miss Rate: {miss_rate:.2f}%")
+
+    # Prime distribution stats
+    prime_array = np.array(primes)
+    print("\nPrime Distribution Statistics:")
+    print(f"Mean of Primes: {np.mean(prime_array):.2f}")
+    print(f"Median of Primes: {np.median(prime_array):.2f}")
+    print(f"Standard Deviation of Primes: {np.std(prime_array):.2f}")
+
+    # Mersenne growth analysis
+    mersenne_values = [(1 << p) - 1 for p in mersenne_primes]
+    print("\nMersenne Prime Growth:")
+    print(f"Smallest Mersenne Prime: {min(mersenne_values)}")
+    print(f"Largest Mersenne Prime: {max(mersenne_values)}")
+    print(f"Mersenne Growth Factor: {max(mersenne_values) / min(mersenne_values):.2f}")
+
+statistical_summary(primes_list, mersenne_primes)
