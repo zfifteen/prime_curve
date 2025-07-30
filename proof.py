@@ -27,7 +27,7 @@ warnings.filterwarnings("ignore")
 # 1. Constants and primes
 # ------------------------------------------------------------------------------
 phi = (1 + np.sqrt(5)) / 2
-N_MAX = 100  # Updated from 20,000 to 100,000
+N_MAX = 1000  # Updated from 20,000 to 100,000
 primes_list = list(sieve.primerange(2, N_MAX + 1))
 
 # ------------------------------------------------------------------------------
