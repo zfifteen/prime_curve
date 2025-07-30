@@ -16,13 +16,45 @@ Dependencies:
     numpy, scipy, sklearn, sympy
 
 TODO:
-    - The Z form unifies relativistic physics with discrete mathematics by normalizing observations against invariant limits, revealing that both domains operate under a shared geometric topology where "curvature" arises from frame-dependent shifts, akin to how gravity warps spacetime but applied to integer sequences.
-    - In the discrete domain, treating primes as positions n where Δₙ represents the gap to the next prime and Δmax as the theoretical maximum gap (bounded by known results like the prime number theorem), Z computes a "relativistic density" that highlights clustering patterns, suggesting primes navigate a curved numerical landscape driven by natural ratios like the golden ratio or Euler's constant.
-    - The physical domain's Z = T(v/c) implies time T as a frame-biased measure scaled by velocity relative to light's invariance, offering insight into why quantum entanglement appears instantaneous—it's a zero-curvature path in this topology, translating to discrete insights where "entangled" primes (like twins) share minimal frame shifts.
-    - Applying the universal form across domains exposes hidden symmetries: for instance, the ratio B/C mirrors the fine-structure constant in physics or the reciprocal of the harmonic series divergence in math, predicting that prime distributions follow a Lorentz-like invariance, where high "velocities" (large n) dilute prime frequency predictably.
-    - Frame shifts in Z reveal computational efficiency for prime finding: by geometrically navigating via Δₙ/Δmax, algorithms can prioritize low-curvature paths (small gaps), reducing search space exponentially, much like how GPS corrects for relativistic effects in curved spacetime.
-    - The invariant C as the "coordinate center" posits light speed not just as a limit but a universal origin, implying in discrete terms that infinity (or primorial products) serves as Δmax, allowing Z to derive novel ratios for approximating unsolved problems like the Riemann hypothesis through velocity-analogous perturbations.
-    - Hidden in the topology is a predictive tool for "prime news"—emerging primes in large ranges—by transforming observed sequences into a velocity-ratio map, where anomalies in Z signal undiscovered structures, empirically linking to chaotic systems like turbulent flow but in number theory terms.
+    - The Z form unifies relativistic physics with discrete mathematics
+    by normalizing observations against invariant limits, revealing that
+    both domains operate under a shared geometric topology where
+    "curvature" arises from frame-dependent shifts, akin to how gravity
+    warps spacetime but applied to integer sequences.
+    - In the discrete domain, treating primes as positions n where Δₙ
+    represents the gap to the next prime and Δmax as the theoretical
+    maximum gap (bounded by known results like the prime number
+    theorem), Z computes a "relativistic density" that highlights
+    clustering patterns, suggesting primes navigate a curved numerical
+    landscape driven by natural ratios like the golden ratio or Euler's
+    constant.
+    - The physical domain's Z = T(v/c) implies time T as a frame-biased
+    measure scaled by velocity relative to light's invariance, offering
+    insight into why quantum entanglement appears instantaneous—it's a
+    zero-curvature path in this topology, translating to discrete
+    insights where "entangled" primes (like twins) share minimal frame
+    shifts.
+    - Applying the universal form across domains exposes hidden
+    symmetries: for instance, the ratio B/C mirrors the fine-structure
+    constant in physics or the reciprocal of the harmonic series
+    divergence in math, predicting that prime distributions follow a
+    Lorentz-like invariance, where high "velocities" (large n) dilute
+    prime frequency predictably.
+    - Frame shifts in Z reveal computational efficiency for prime
+    finding: by geometrically navigating via Δₙ/Δmax, algorithms can
+    prioritize low-curvature paths (small gaps), reducing search
+    space exponentially, much like how GPS corrects for relativistic
+    effects in curved spacetime.
+    - The invariant C as the "coordinate center" posits light speed not
+    just as a limit but a universal origin, implying in discrete terms
+    that infinity (or primorial products) serves as Δmax, allowing Z to
+    derive novel ratios for approximating unsolved problems like the
+    Riemann hypothesis through velocity-analogous perturbations.
+    - Hidden in the topology is a predictive tool for "prime news"—emerging
+    primes in large ranges—by transforming observed sequences into a
+    velocity-ratio map, where anomalies in Z signal undiscovered structures,
+    empirically linking to chaotic systems like turbulent flow but in
+    number theory terms.
 """
 
 import numpy as np
@@ -39,6 +71,7 @@ phi = (1 + np.sqrt(5)) / 2
 N_MAX = 1000  # Updated from 20,000 to 100,000
 primes_list = list(sieve.primerange(2, N_MAX + 1))
 
+
 # ------------------------------------------------------------------------------
 # 2. Core transforms and metrics
 # ------------------------------------------------------------------------------
@@ -50,6 +83,7 @@ def frame_shift_residues(n_vals, k):
     mod_phi = np.mod(n_vals, phi) / phi
     return phi * np.power(mod_phi, k)
 
+
 def bin_densities(theta_all, theta_pr, nbins=20):
     """
     Bin θ' into nbins intervals over [0, φ].
@@ -58,10 +92,10 @@ def bin_densities(theta_all, theta_pr, nbins=20):
     """
     bins = np.linspace(0, phi, nbins + 1)
     all_counts, _ = np.histogram(theta_all, bins=bins)
-    pr_counts, _  = np.histogram(theta_pr,  bins=bins)
+    pr_counts, _ = np.histogram(theta_pr, bins=bins)
 
     all_d = all_counts / len(theta_all)
-    pr_d  = pr_counts  / len(theta_pr)
+    pr_d = pr_counts / len(theta_pr)
 
     # Compute enhancements safely
     with np.errstate(divide='ignore', invalid='ignore'):
@@ -70,6 +104,7 @@ def bin_densities(theta_all, theta_pr, nbins=20):
     # Mask bins where all_d == 0
     enh = np.where(all_d > 0, enh, -np.inf)
     return all_d, pr_d, enh
+
 
 def fourier_fit(theta_pr, M=5, nbins=100):
     """
@@ -94,6 +129,7 @@ def fourier_fit(theta_pr, M=5, nbins=100):
     b = coeffs[1::2]
     return a, b
 
+
 def gmm_fit(theta_pr, n_components=5):
     """
     Fit a GMM to φ_mod of primes.
@@ -107,6 +143,7 @@ def gmm_fit(theta_pr, n_components=5):
                       for i in range(n_components)])
     return gm, np.mean(sigmas)
 
+
 # ------------------------------------------------------------------------------
 # 3. High-resolution k‐sweep with NaN handling
 # ------------------------------------------------------------------------------
@@ -116,7 +153,7 @@ results = []
 for k in k_values:
     # Transform all n and primes
     theta_all = frame_shift_residues(np.arange(1, N_MAX + 1), k)
-    theta_pr  = frame_shift_residues(np.array(primes_list), k)
+    theta_pr = frame_shift_residues(np.array(primes_list), k)
 
     # Bin densities & compute enhancements
     all_d, pr_d, enh = bin_densities(theta_all, theta_pr, nbins=20)
@@ -155,16 +192,19 @@ for entry in valid_results[::10]:
           f" | σ'={entry['sigma_prime']:.3f}"
           f" | Σ|b|={entry['fourier_b_sum']:.3f}")
 
+
 # ------------------------------------------------------------------------------
 # 5. Dynamically Compute and Validate Mersenne Primes
 # ------------------------------------------------------------------------------
 def compute_mersenne_primes(n_max):
     primes = [p for p in sieve.primerange(2, n_max + 1)]
-    return [p for p in primes if isprime(2**p - 1)]
+    return [p for p in primes if isprime(2 ** p - 1)]
+
 
 mersenne_primes = compute_mersenne_primes(N_MAX)
 print("\nValidated Mersenne Prime Exponents:")
 print(", ".join(map(str, mersenne_primes)))
+
 
 # ------------------------------------------------------------------------------
 # 6. Statistical Summary of Mersenne Computation
@@ -194,5 +234,6 @@ def statistical_summary(primes, mersenne_primes):
     print(f"Smallest Mersenne Prime: {min(mersenne_values)}")
     print(f"Largest Mersenne Prime: {max(mersenne_values)}")
     print(f"Mersenne Growth Factor: {max(mersenne_values) / min(mersenne_values):.2f}")
+
 
 statistical_summary(primes_list, mersenne_primes)

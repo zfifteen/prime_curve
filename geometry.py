@@ -17,13 +17,44 @@ Dependencies:
 
 
 TODO:
-    - Implement Domain Curvature Transformation to refactor the code's prime gap calculations: by normalizing Δₙ against Δmax derived from prime number theorem approximations, adjust for frame-biased integer observations, reducing computational overhead in large n ranges by focusing on low-curvature paths where prime clusters are densest, similar to how GPS algorithms account for spacetime warping.
-    - Apply Universal Form Transformer to bridge physical and discrete analogies: enhance the code's velocity-ratio mappings (v/c) to predict prime distributions via Lorentz-like boosts, incorporating natural ratios like the golden ratio for Δmax estimations, allowing the algorithm to simulate "relativistic density" and preemptively skip high-gap regions, boosting efficiency for finding twin primes or other entangled pairs.
-    - Use Universal Frame Shift Transformer for user interaction modules: if the code includes output interfaces, compensate for human frame biases by translating Z-computed insights into familiar terms like probability densities or visual graphs, anticipating user queries on prime news by pre-generating velocity-analogous perturbations that highlight emerging structures in unsolved problems like Goldbach's conjecture.
-    - Enhance prime-finding algorithms with Z's predictive topology: integrate a "curved numerical landscape" navigator that uses B/C ratios to mirror fine-structure constants, enabling exponential search space reduction by prioritizing sequences with minimal frame shifts, empirically linking to chaotic systems for faster anomaly detection in large prime hunts.
-    - Incorporate invariant C as a dynamic origin: upgrade the code to treat Δmax as an adaptive limit based on primorial products or Euler's constant, allowing Z to derive novel approximations for Riemann zeta function evaluations, transforming static integer checks into dynamic, ratio-driven explorations that reveal hidden symmetries in prime spacing.
-    - Optimize for computational efficiency via entanglement insights: refactor to identify "zero-curvature paths" where primes appear instantaneous like quantum links, using Z to cluster twin primes or prime quadruplets, reducing iterations by mapping gaps to velocity frames and avoiding dilated high-n dilutions.
-    - Extend to multi-domain applications: leverage the unified topology to add modules that transfer Z from discrete primes to physical simulations, such as modeling particle velocities against c, enabling the code to cross-validate prime predictions with relativistic invariants, uncovering universal truths in both math and physics through shared curvature corrections.
+    - Implement Domain Curvature Transformation to refactor the code's prime
+    gap calculations: by normalizing Δₙ against Δmax derived from prime
+    number theorem approximations, adjust for frame-biased integer observations,
+    reducing computational overhead in large n ranges by focusing on
+    low-curvature paths where prime clusters are densest, similar to how GPS
+    algorithms account for spacetime warping.
+    - Apply Universal Form Transformer to bridge physical and discrete analogies:
+    enhance the code's velocity-ratio mappings (v/c) to predict prime
+    distributions via Lorentz-like boosts, incorporating natural ratios like the
+    golden ratio for Δmax estimations, allowing the algorithm to simulate
+    "relativistic density" and preemptively skip high-gap regions, boosting
+    efficiency for finding twin primes or other entangled pairs.
+    - Use Universal Frame Shift Transformer for user interaction modules: if the
+    code includes output interfaces, compensate for human frame biases by
+    translating Z-computed insights into familiar terms like probability densities
+    or visual graphs, anticipating user queries on prime news by pre-generating
+    velocity-analogous perturbations that highlight emerging structures in
+    unsolved problems like Goldbach's conjecture.
+    - Enhance prime-finding algorithms with Z's predictive topology: integrate
+    a "curved numerical landscape" navigator that uses B/C ratios to mirror
+    fine-structure constants, enabling exponential search space reduction by
+    prioritizing sequences with minimal frame shifts, empirically linking to
+    chaotic systems for faster anomaly detection in large prime hunts.
+    - Incorporate invariant C as a dynamic origin: upgrade the code to treat
+    Δmax as an adaptive limit based on primorial products or Euler's constant,
+    allowing Z to derive novel approximations for Riemann zeta function
+    evaluations, transforming static integer checks into dynamic, ratio-driven
+    explorations that reveal hidden symmetries in prime spacing.
+    - Optimize for computational efficiency via entanglement insights: refactor
+    to identify "zero-curvature paths" where primes appear instantaneous like
+    quantum links, using Z to cluster twin primes or prime quadruplets,
+    reducing iterations by mapping gaps to velocity frames and avoiding
+    dilated high-n dilutions.
+    - Extend to multi-domain applications: leverage the unified topology to add
+    modules that transfer Z from discrete primes to physical simulations, such as
+    modeling particle velocities against c, enabling the code to cross-validate
+    prime predictions with relativistic invariants, uncovering universal truths
+    in both math and physics through shared curvature corrections.
 """
 
 import numpy as np
