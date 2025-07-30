@@ -352,7 +352,12 @@ class GMMAnalyzer:
     
     def _select_optimal_components(self, data: np.ndarray) -> int:
         """Select optimal number of components using BIC."""
-        max_comp = min(self.max_components, len(data) // 10, 20)
+        max_comp = min(self.max_components, len(data) // 2, 20)
+        
+        # Ensure we have at least 1 component
+        if max_comp < 1:
+            return 1
+            
         bic_scores = []
         
         for n in range(1, max_comp + 1):
@@ -363,6 +368,9 @@ class GMMAnalyzer:
             except:
                 bic_scores.append(np.inf)
         
+        if not bic_scores:
+            return 1
+            
         return np.argmin(bic_scores) + 1
     
     def density_estimation(self, data: np.ndarray, eval_points: np.ndarray = None) -> np.ndarray:
@@ -733,10 +741,22 @@ class StatisticalAnalyzer:
         else:
             data_2d = data
         
+        # For very small datasets, skip clustering analysis
+        if len(data) < 4:
+            return {
+                'optimal_k_elbow': 1,
+                'optimal_k_silhouette': 1,
+                'best_silhouette_score': -1.0,
+                'inertias': np.array([0.0]),
+                'silhouette_scores': np.array([-1.0]),
+                'cluster_range': np.array([1])
+            }
+        
         # Determine optimal number of clusters using elbow method
         inertias = []
         silhouette_scores = []
-        cluster_range = range(2, min(max_clusters + 1, len(data) // 2))
+        max_k = min(max_clusters, len(data) // 2)
+        cluster_range = range(2, max(3, max_k + 1))
         
         for k in cluster_range:
             try:
@@ -756,7 +776,10 @@ class StatisticalAnalyzer:
                 silhouette_scores.append(-1)
         
         # Find optimal k using elbow method
-        optimal_k = self._find_elbow(list(cluster_range), inertias)
+        if inertias:
+            optimal_k = self._find_elbow(list(cluster_range), inertias)
+        else:
+            optimal_k = 2
         
         # Best silhouette score
         if silhouette_scores:
@@ -778,7 +801,7 @@ class StatisticalAnalyzer:
     def _find_elbow(self, x_vals: List[int], y_vals: List[float]) -> int:
         """Find elbow point in curve using angle method."""
         if len(x_vals) < 3:
-            return x_vals[0]
+            return x_vals[0] if x_vals else 2
         
         # Calculate angles for each point
         angles = []
@@ -798,7 +821,7 @@ class StatisticalAnalyzer:
             elbow_idx = np.argmax(angles) + 1  # +1 because we started from index 1
             return x_vals[elbow_idx]
         else:
-            return x_vals[0]
+            return x_vals[0] if x_vals else 2
     
     def trend_analysis(self, data: np.ndarray, window_size: int = None) -> Dict[str, Union[float, np.ndarray]]:
         """
