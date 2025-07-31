@@ -21,9 +21,18 @@
 
         function fetchPlot(viewType) {
             fetch(`/plot/${viewType}`)
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     Plotly.newPlot(plotDiv, data.data, data.layout);
+                })
+                .catch(error => {
+                    console.error('Error fetching plot:', error);
+                    alert('Error fetching plot. Please try again.');
                 });
         }
 
