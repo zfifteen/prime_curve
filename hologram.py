@@ -22,7 +22,12 @@ class ZetaShift(ABC):
 
     @staticmethod
     def is_prime(num: int) -> bool:
-        """Utility to check primality for flagging or adjustments."""
+        """
+        Utility to check primality for flagging or adjustments.
+        NOTE: This traditional primality test is now only used for reference 
+        calculations. The main primality determination uses the golden ratio 
+        transformation sieve from proof.py.
+        """
         if num <= 1:
             return False
         if num <= 3:
@@ -69,6 +74,69 @@ def zeta_transform(value: float, rate: float = math.e, invariant: float = math.e
 # Vectorized version for arrays
 vectorized_zeta = np.vectorize(zeta_transform)
 
+# Golden ratio-based transformation sieve (from proof.py)
+# Replaces traditional primality testing with enhanced prime density regions
+phi = (1 + np.sqrt(5)) / 2  # Golden ratio
+
+def golden_ratio_transform(n_vals, k=0.3):
+    """
+    Golden ratio transformation θ'(n, k) = φ * ((n mod φ)/φ)^k
+    Source: proof.py transformation sieve
+    """
+    mod_phi = np.mod(n_vals, phi) / phi
+    return phi * np.power(mod_phi, k)
+
+def get_enhanced_bins(all_values, prime_values, nbins=20, top_x=3):
+    """
+    Determine bins with highest prime enhancement using golden ratio transformation.
+    Source: proof.py bin_densities logic
+    """
+    # Apply transformation to all values and known primes
+    theta_all = golden_ratio_transform(all_values)
+    theta_primes = golden_ratio_transform(prime_values)
+    
+    # Create bins over [0, φ]
+    bins = np.linspace(0, phi, nbins + 1)
+    all_counts, _ = np.histogram(theta_all, bins=bins)
+    prime_counts, _ = np.histogram(theta_primes, bins=bins)
+    
+    # Calculate densities and enhancements
+    all_density = all_counts / len(all_values)
+    prime_density = prime_counts / len(theta_primes)
+    
+    # Compute enhancements safely
+    with np.errstate(divide='ignore', invalid='ignore'):
+        enhancement = (prime_density - all_density) / all_density * 100
+    
+    # Mask bins where all_density == 0
+    enhancement = np.where(all_density > 0, enhancement, -np.inf)
+    
+    # Find top X bins with highest enhancement
+    valid_enhancements = enhancement[np.isfinite(enhancement)]
+    if len(valid_enhancements) >= top_x:
+        threshold = np.partition(valid_enhancements, -top_x)[-top_x]
+        top_bins = np.where(enhancement >= threshold)[0]
+    else:
+        top_bins = np.where(np.isfinite(enhancement))[0]
+    
+    return bins, top_bins
+
+def create_prime_like_mask(n_vals, top_bins, bins):
+    """
+    Create 'prime-like' mask for values whose θ'(n, k) falls into enhanced bins.
+    Source: proof.py sieve filtering approach
+    """
+    theta_vals = golden_ratio_transform(n_vals)
+    prime_like_mask = np.zeros(len(n_vals), dtype=bool)
+    
+    for bin_idx in top_bins:
+        bin_start = bins[bin_idx]
+        bin_end = bins[bin_idx + 1]
+        mask = (theta_vals >= bin_start) & (theta_vals < bin_end)
+        prime_like_mask |= mask
+    
+    return prime_like_mask
+
 # Parameters
 N_POINTS = 5000
 HELIX_FREQ = 0.1003033  # Tweakable ratio
@@ -76,7 +144,19 @@ LOG_SCALE = False  # Toggle for log scaling on Y-axis
 
 # Generate data
 n = np.arange(1, N_POINTS)
-primality = np.vectorize(ZetaShift.is_prime)(n)  # Use ZetaShift's is_prime
+
+# Get reference primes for enhanced bin calculation (using traditional method for reference only)
+reference_primes = []
+for num in range(2, min(1000, N_POINTS)):  # Limited range for efficiency
+    if ZetaShift.is_prime(num):
+        reference_primes.append(num)
+reference_primes = np.array(reference_primes)
+
+# Calculate enhanced bins using golden ratio transformation (from proof.py)
+bins, top_bins = get_enhanced_bins(np.arange(1, 1000), reference_primes, nbins=20, top_x=3)
+
+# Create prime-like mask based on transformation sieve instead of traditional primality
+primality = create_prime_like_mask(n, top_bins, bins)
 
 # Y-values: choose raw, log, or polynomial
 if LOG_SCALE:
