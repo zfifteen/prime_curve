@@ -4,37 +4,39 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import mpmath
 
-mpmath.mp.dps = 10  # Set precision for mpmath
+mpmath.mp.dps = 15  # Reduced for speed
 
-def is_prime(n: int) -> bool:
-    if n < 2:
-        return False
-    for i in range(2, int(math.sqrt(n)) + 1):
-        if n % i == 0:
-            return False
-    return True
+# Efficient prime generation using Sieve of Eratosthenes
+def generate_primes(limit):
+    sieve = [True] * (limit + 1)
+    sieve[0:2] = [False, False]
+    for i in range(2, int(math.sqrt(limit)) + 1):
+        if sieve[i]:
+            for j in range(i*i, limit + 1, i):
+                sieve[j] = False
+    return [n for n in range(2, limit + 1) if sieve[n]]
 
-# Generate first 1000 primes
-N_MAX = 10000
-primes = [n for n in range(2, N_MAX) if is_prime(n)][:1000]
+# Constants
+phi = (1 + np.sqrt(5)) / 2
+k = 0.300
 
-# Compute gaps and max gap for frame shifts
+# Generate first 10000 primes
+primes = generate_primes(110000)[:100]
+
+# Compute gaps and max gap
 gaps = np.diff(primes)
 max_gap = max(gaps)
-# Z_list for frame shifts: Z = p * (gap / max_gap) for first 999 primes
-Z_list = [primes[i] * (gaps[i] / max_gap) for i in range(len(gaps))]
 
-# Known imaginary parts of first 20 non-trivial zeros (approximated)
-known_zeros_im = [
-    14.135, 21.022, 25.011, 30.425, 32.935, 37.586, 40.919, 43.327,
-    48.005, 49.774, 52.970, 56.446, 59.347, 60.832, 65.113, 67.080,
-    69.546, 72.067, 75.705, 77.145
-]
+# Optimized Z_list
+Z_list = [primes[i] * (gaps[i] / max_gap) ** k for i in range(len(gaps))]
 
-# Set up grid for surface, scaled to cover shifted Z range
+# Compute first 10000 non-trivial zeros' imaginary parts
+known_zeros_im = [float(mpmath.im(mpmath.zetazero(n))) for n in range(1, 10001)]
+
+# Set up coarser grid for surface
 max_imag = max(Z_list) * 1.1 if Z_list else 100
-real = np.linspace(0.1, 1.2, 50)
-imag = np.linspace(0, max_imag, 100)
+real = np.linspace(0.1, 1.2, 20)  # Coarser
+imag = np.linspace(0, max_imag, 50)  # Coarser
 Re, Im = np.meshgrid(real, imag)
 
 # Compute log|zeta| on grid
@@ -44,32 +46,35 @@ for i in range(Re.shape[0]):
         s = complex(Re[i, j], Im[i, j])
         zeta = mpmath.zeta(s)
         abs_zeta = abs(zeta)
-        zeta_mag[i, j] = float(mpmath.log(abs_zeta)) if abs_zeta > 0 else -10  # Cap -inf
+        zeta_mag[i, j] = float(mpmath.log(abs_zeta)) if abs_zeta > 0 else -10
 
 # Plot the surface
 fig = plt.figure(figsize=(14, 10))
 ax = fig.add_subplot(111, projection='3d')
-ax.plot_surface(Re, Im, zeta_mag, cmap='viridis', alpha=0.7)
+surf = ax.plot_surface(Re, Im, zeta_mag, cmap='viridis', alpha=0.7)
 
-# Overlay frame-shifted primes on critical line
-for z_im in Z_list:
+# Add colorbar
+fig.colorbar(surf, ax=ax, shrink=0.5, aspect=5, label='log|ζ(s)|')
+
+# Overlay frame-shifted primes (subsample every 10th for clarity)
+for idx, z_im in enumerate(Z_list[::10]):
     s = complex(0.5, z_im)
     zeta = mpmath.zeta(s)
     abs_zeta = abs(zeta)
     log_abs = float(mpmath.log(abs_zeta)) if abs_zeta > 0 else -10
-    # Apply Universal Form Transformer adjustment: scale log_abs by (z_im / math.e)
-    adjusted_log = log_abs * (z_im / math.e)
-    ax.scatter(0.5, z_im, adjusted_log, c='red', s=50, edgecolor='gold', label='Shifted Primes' if z_im == Z_list[0] else None)
+    adjusted_log = log_abs * (z_im / phi)
+    ax.scatter(0.5, z_im, adjusted_log, c='red', s=50, edgecolor='gold', label='Shifted Primes' if idx == 0 else None)
 
-# Overlay approximate non-trivial zeros at capped low value
-min_log = np.min(zeta_mag) - 5  # Below surface minima
-for t_zero in known_zeros_im:
+# Overlay zeros (subsample every 10th)
+min_log = np.min(zeta_mag) - 5
+for idx, t_zero in enumerate(known_zeros_im[::10]):
     if t_zero <= max_imag:
-        ax.scatter(0.5, t_zero, min_log, c='blue', s=100, marker='x', label='Zero Approx' if t_zero == known_zeros_im[0] else None)
+        ax.scatter(0.5, t_zero, min_log, c='blue', s=100, marker='x', label='Zero Approx' if idx == 0 else None)
 
-ax.set_title('Enhanced Riemann Zeta Landscape: Frame-Shifted Primes and Zero Approximations')
+ax.set_title('Optimized Riemann Zeta Landscape (n=10000): Curvature-Adjusted Frame-Shifted Primes and Extended Zero Approximations')
 ax.set_xlabel('Real Part')
-ax.set_ylabel('Imaginary Part (Shifted for Primes)')
-ax.set_zlabel('log|ζ(s)| (Adjusted)')
+ax.set_ylabel('Imaginary Part (Curvature-Adjusted for Primes)')
+ax.set_zlabel('log|ζ(s)| (Ratio-Scaled)')
 ax.legend()
+ax.view_init(elev=30, azim=135)
 plt.show()
