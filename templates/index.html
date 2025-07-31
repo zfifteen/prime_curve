@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Interactive Prime Curvature Plots</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <h1>3D Interactive Prime Curvature Plots</h1>
+    <label for="plot-select">Choose a plot:</label>
+    <select id="plot-select">
+        {% for view in views %}
+            <option value="{{ view }}">{{ view }}</option>
+        {% endfor %}
+    </select>
+    <div id="plot" style="width: 100%; height: 500px;"></div>
+    <script>
+        const select = document.getElementById('plot-select');
+        const plotDiv = document.getElementById('plot');
+
+        function fetchPlot(viewType) {
+            fetch(`/plot/${viewType}`)
+                .then(response => response.json())
+                .then(data => {
+                    Plotly.newPlot(plotDiv, data.data, data.layout);
+                });
+        }
+
+        // Fetch the initial plot
+        fetchPlot(select.value);
+
+        // Update the plot on dropdown change
+        select.addEventListener('change', (e) => {
+            fetchPlot(e.target.value);
+        });
+    </script>
+</body>
+</html>
