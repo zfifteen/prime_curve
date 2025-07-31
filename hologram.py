@@ -270,9 +270,9 @@ ax = fig.add_subplot(111, projection='3d')
 R, r = 10, 3
 mod1, mod2 = 17, 23
 theta = 2 * np.pi * (n % mod1) / mod1
-phi = 2 * np.pi * (n % mod2) / mod2
-x = (R + r * np.cos(theta)) * np.cos(phi)
-y = (R + r * np.cos(theta)) * np.sin(phi)
+phi_angle = 2 * np.pi * (n % mod2) / mod2
+x = (R + r * np.cos(theta)) * np.cos(phi_angle)
+y = (R + r * np.cos(theta)) * np.sin(phi_angle)
 z = r * np.sin(theta)
 res_class = n % 6
 colors = np.where(primality, 'red', np.where((res_class == 1) | (res_class == 5), 'blue', 'gray'))
