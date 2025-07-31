@@ -155,13 +155,9 @@
                 // Clear any existing content and render the new plot
                 plotDiv.innerHTML = '';
                 
-                // Use Plotly.newPlot for initial rendering or Plotly.react for updates
-                if (currentPlot) {
-                    await Plotly.react(plotDiv, plotData.data, enhancedLayout, config);
-                } else {
-                    await Plotly.newPlot(plotDiv, plotData.data, enhancedLayout, config);
-                    currentPlot = plotDiv;
-                }
+                // Always use Plotly.newPlot for reliable rendering
+                await Plotly.newPlot(plotDiv, plotData.data, enhancedLayout, config);
+                currentPlot = plotDiv;
                 
                 // Make the plot responsive
                 window.addEventListener('resize', () => {
