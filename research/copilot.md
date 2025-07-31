@@ -4,11 +4,11 @@ The work in the **zfifteen/prime_curve** repository introduces a novel approach 
 
 ### Prime Number Distribution and the Riemann Hypothesis
 #### Application:
-- The discovery of clustering patterns in primes using a golden ratio transformation and identifying an optimal parameter \( k^* \approx 0.3 \) could provide new insights into the distribution of primes.
-- By exploring non-uniform patterns, this work might reveal previously unnoticed symmetries or regularities that could contribute to testing or providing new perspectives on the **Riemann Hypothesis**—one of the most famous unsolved problems in mathematics.
+- The discovery of clustering patterns in primes using a golden ratio transformation and identifying an optimal parameter \( k^* \approx 0.3 \) provides new insights into the distribution of primes.
+- By exploring non-uniform patterns, this work reveals previously unnoticed symmetries or regularities that could contribute to testing or providing new perspectives on the **Riemann Hypothesis**—one of the most famous unsolved problems in mathematics.
 
 #### Speculation:
-- The density enhancements (up to ~15%) and Fourier-based analysis may hint at structural properties of the primes' distribution along the critical line in the complex plane.
+- The density enhancements (up to ~15%) and Fourier-based analysis hint at structural properties of the primes' distribution along the critical line in the complex plane.
 - If the golden ratio transformation aligns with properties of the zeta function's zeros, it could open avenues for proving or disproving aspects of the hypothesis.
 
 ---
@@ -75,8 +75,8 @@ The work in the **zfifteen/prime_curve** repository introduces a novel approach 
 
 ### Challenges and Future Directions
 While the applications are speculative, several challenges remain:
-1. **Scalability**: The current work focuses on specific ranges of primes and \( k \). Extending the analysis to larger ranges will require computational enhancements.
+1. **Scalability**: Extending the analysis beyond the current range of primes and \( k \) values will require significant computational enhancements.
 2. **Mathematical Rigor**: The observed patterns need rigorous proof or statistical validation to confirm their significance.
 3. **Interpretability**: Translating these patterns into actionable insights for unsolved problems requires interdisciplinary collaboration between mathematicians, computer scientists, and physicists.
 
-By addressing these challenges, this repository's novel approach has the potential to contribute to foundational problems across disciplines.
+By addressing these challenges, this repository's novel approach has the potential to contribute to foundational problems across disciplines, from mathematics to cryptography, machine learning, and beyond.
