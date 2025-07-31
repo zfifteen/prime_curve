@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prime Curve Interactive 3D Visualizations</title>
+    <script src="/plotly.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .controls {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        select {
+            padding: 10px 15px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            background-color: white;
+            cursor: pointer;
+        }
+        select:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+        #plot-container {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fafafa;
+        }
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+            font-style: italic;
+        }
+        .error {
+            text-align: center;
+            padding: 50px;
+            color: #d32f2f;
+            background-color: #ffebee;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Prime Curve Interactive 3D Visualizations</h1>
+        
+        <div class="controls">
+            <label for="view-select">Select Visualization Type:</label>
+            <select id="view-select">
+                <option value="">-- Choose a visualization --</option>
+                {% for view in views %}
+                <option value="{{ view }}">{{ view }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div id="plot-container">
+            <div class="loading">
+                Please select a visualization type from the dropdown above to display the interactive 3D plot.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get references to DOM elements
+        const viewSelect = document.getElementById('view-select');
+        const plotContainer = document.getElementById('plot-container');
+
+        // Function to show loading state
+        function showLoading() {
+            plotContainer.innerHTML = '<div class="loading">Loading visualization...</div>';
+        }
+
+        // Function to show error state
+        function showError(message) {
+            plotContainer.innerHTML = `<div class="error">Error: ${message}</div>`;
+        }
+
+        // Function to fetch and render plot
+        async function loadPlot(viewType) {
+            if (!viewType) {
+                plotContainer.innerHTML = '<div class="loading">Please select a visualization type from the dropdown above to display the interactive 3D plot.</div>';
+                return;
+            }
+
+            showLoading();
+
+            try {
+                // Fetch plot data from Flask API
+                const response = await fetch(`/plot/${encodeURIComponent(viewType)}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const plotData = await response.json();
+                
+                // Clear the container and render the plot
+                plotContainer.innerHTML = '';
+                
+                // Configure the plot layout for responsive design
+                const config = {
+                    responsive: true,
+                    displayModeBar: true,
+                    displaylogo: false,
+                    modeBarButtonsToRemove: ['pan2d', 'lasso2d']
+                };
+
+                // Update layout for better fit
+                if (plotData.layout) {
+                    plotData.layout.autosize = true;
+                    plotData.layout.margin = { l: 0, r: 0, t: 50, b: 0 };
+                    plotData.layout.scene = {
+                        ...plotData.layout.scene,
+                        camera: {
+                            eye: { x: 1.5, y: 1.5, z: 1.5 }
+                        }
+                    };
+                }
+
+                // Render the plot using Plotly
+                Plotly.newPlot(plotContainer, plotData.data, plotData.layout, config);
+                
+            } catch (error) {
+                console.error('Error loading plot:', error);
+                showError(`Failed to load visualization: ${error.message}`);
+            }
+        }
+
+        // Event listener for dropdown changes
+        viewSelect.addEventListener('change', function() {
+            const selectedView = this.value;
+            loadPlot(selectedView);
+        });
+
+        // Initialize with first option if available
+        document.addEventListener('DOMContentLoaded', function() {
+            // Optionally auto-load the first visualization
+            // viewSelect.selectedIndex = 1;
+            // loadPlot(viewSelect.value);
+        });
+    </script>
+</body>
+</html>

@@ -1,6 +1,7 @@
 from flask import Flask, render_template, jsonify
 import numpy as np
 import plotly.graph_objs as go
+import plotly.offline as pyo
 from plotly.subplots import make_subplots
 
 app = Flask(__name__)
@@ -92,6 +93,16 @@ def get_plot(view_type):
     """
     fig = create_3d_plot(view_type)
     return jsonify(fig.to_dict())
+
+@app.route('/plotly.js')
+def plotly_js():
+    """
+    Serve the Plotly JavaScript library.
+    """
+    from flask import Response
+    import plotly
+    js_content = plotly.offline.get_plotlyjs()
+    return Response(js_content, mimetype='application/javascript')
 
 # ----------------------------------------------------------------------------
 # Main entry point
