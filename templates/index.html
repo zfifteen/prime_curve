@@ -4,7 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>3D Interactive Prime Curvature Plots</title>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script>
+        // Patch HTMLCanvasElement.getContext to automatically set willReadFrequently
+        // This must be done before Plotly.js loads to take effect
+        (function() {
+            const originalGetContext = HTMLCanvasElement.prototype.getContext;
+            HTMLCanvasElement.prototype.getContext = function(contextType, contextAttributes = {}) {
+                if (contextType === '2d') {
+                    // Set willReadFrequently to true for 2D contexts to optimize performance
+                    contextAttributes = { willReadFrequently: true, ...contextAttributes };
+                }
+                return originalGetContext.call(this, contextType, contextAttributes);
+            };
+        })();
+    </script>
+    <script src="{{ url_for('static', filename='js/plotly.min.js') }}"></script>
 </head>
 <body>
     <h1>3D Interactive Prime Curvature Plots</h1>
@@ -19,11 +33,53 @@
         const select = document.getElementById('plot-select');
         const plotDiv = document.getElementById('plot');
 
+        // Optimize canvas performance for frequent readback operations
+        function optimizeCanvasPerformance() {
+            const canvases = plotDiv.querySelectorAll('canvas');
+            canvases.forEach(canvas => {
+                // Set willReadFrequently attribute for better performance with getImageData
+                canvas.setAttribute('willReadFrequently', 'true');
+            });
+        }
+
+        // Set up MutationObserver to catch dynamically created canvas elements
+        function setupCanvasOptimization() {
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    mutation.addedNodes.forEach((node) => {
+                        if (node.nodeType === 1) { // Element node
+                            // Check if the added node is a canvas or contains canvas elements
+                            if (node.tagName === 'CANVAS') {
+                                node.setAttribute('willReadFrequently', 'true');
+                            }
+                            // Also check for canvas elements within the added node
+                            const canvases = node.querySelectorAll ? node.querySelectorAll('canvas') : [];
+                            canvases.forEach(canvas => {
+                                canvas.setAttribute('willReadFrequently', 'true');
+                            });
+                        }
+                    });
+                });
+            });
+            
+            observer.observe(plotDiv, {
+                childList: true,
+                subtree: true
+            });
+            
+            return observer;
+        }
+
+        // Initialize canvas optimization observer
+        const canvasObserver = setupCanvasOptimization();
+
         function fetchPlot(viewType) {
             fetch(`/plot/${viewType}`)
                 .then(response => response.json())
                 .then(data => {
                     Plotly.newPlot(plotDiv, data.data, data.layout);
+                    // Optimize canvas performance after plot is created
+                    setTimeout(optimizeCanvasPerformance, 100);
                 });
         }
 
