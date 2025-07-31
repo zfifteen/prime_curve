@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prime Curve - Interactive 3D Visualizations</title>
+    <!-- Using local Plotly.js to avoid CDN blocking issues -->
+    <script src="/static/plotly.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .controls {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        label {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        select {
+            padding: 8px 15px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+        }
+        select:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        #plotDiv {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #fafafa;
+        }
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+            font-style: italic;
+        }
+        .error {
+            text-align: center;
+            padding: 50px;
+            color: #dc3545;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Prime Curve - Interactive 3D Visualizations</h1>
+        
+        <div class="controls">
+            <label for="viewSelector">Select Visualization:</label>
+            <select id="viewSelector" onchange="fetchPlot()">
+                {% for view in views %}
+                <option value="{{ view }}">{{ view }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div id="plotDiv">
+            <div class="loading">Loading plot...</div>
+        </div>
+    </div>
+
+    <script>
+        // Global variable to track the current plot
+        let currentPlot = null;
+
+        /**
+         * Fetch plot data from the Flask backend and render it using Plotly
+         */
+        async function fetchPlot() {
+            const selector = document.getElementById('viewSelector');
+            const selectedView = selector.value;
+            const plotDiv = document.getElementById('plotDiv');
+            
+            // Show loading state
+            plotDiv.innerHTML = '<div class="loading">Loading plot...</div>';
+            
+            try {
+                // Fetch plot data from Flask backend
+                const response = await fetch(`/plot/${encodeURIComponent(selectedView)}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const plotData = await response.json();
+                
+                // Verify we have valid plot data
+                if (!plotData || !plotData.data || !Array.isArray(plotData.data)) {
+                    throw new Error('Invalid plot data received from server');
+                }
+                
+                // Configure Plotly layout with performance optimizations
+                const config = {
+                    displayModeBar: true,
+                    displaylogo: false,
+                    modeBarButtonsToRemove: ['pan2d', 'lasso2d'],
+                    // Canvas optimizations to address Canvas2D warnings
+                    plotlyServerURL: false,
+                    toImageButtonOptions: {
+                        format: 'png',
+                        filename: `prime_curve_${selectedView.replace(/\s+/g, '_').toLowerCase()}`,
+                        height: 600,
+                        width: 800,
+                        scale: 1
+                    }
+                };
+                
+                // Enhanced layout for better performance and visual appeal
+                const enhancedLayout = {
+                    ...plotData.layout,
+                    autosize: true,
+                    margin: { l: 0, r: 0, t: 50, b: 0 },
+                    scene: {
+                        ...plotData.layout.scene,
+                        camera: {
+                            eye: { x: 1.5, y: 1.5, z: 1.5 }
+                        },
+                        aspectmode: 'cube'
+                    },
+                    // Performance optimizations
+                    transition: {
+                        duration: 500,
+                        easing: 'cubic-in-out'
+                    }
+                };
+                
+                // Clear any existing content and render the new plot
+                plotDiv.innerHTML = '';
+                
+                // Use Plotly.newPlot for initial rendering or Plotly.react for updates
+                if (currentPlot) {
+                    await Plotly.react(plotDiv, plotData.data, enhancedLayout, config);
+                } else {
+                    await Plotly.newPlot(plotDiv, plotData.data, enhancedLayout, config);
+                    currentPlot = plotDiv;
+                }
+                
+                // Make the plot responsive
+                window.addEventListener('resize', () => {
+                    Plotly.Plots.resize(plotDiv);
+                });
+                
+                console.log(`Successfully loaded plot: ${selectedView}`);
+                
+            } catch (error) {
+                console.error('Error fetching plot:', error);
+                plotDiv.innerHTML = `
+                    <div class="error">
+                        <strong>Error loading plot:</strong><br>
+                        ${error.message}<br>
+                        <small>Please check the browser console for more details.</small>
+                    </div>
+                `;
+            }
+        }
+        
+        // Load the initial plot when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchPlot();
+        });
+        
+        // Add keyboard navigation support
+        document.getElementById('viewSelector').addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                fetchPlot();
+            }
+        });
+    </script>
+</body>
+</html>

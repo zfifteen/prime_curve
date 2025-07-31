@@ -1,7 +1,9 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, send_from_directory
 import numpy as np
 import plotly.graph_objs as go
 from plotly.subplots import make_subplots
+import os
+import plotly
 
 app = Flask(__name__)
 
@@ -91,7 +93,25 @@ def get_plot(view_type):
     Return the plot as a JSON response for dynamic rendering.
     """
     fig = create_3d_plot(view_type)
-    return jsonify(fig.to_dict())
+    # Convert to dict and ensure NumPy arrays are properly serialized
+    plot_dict = fig.to_dict()
+    
+    # Convert any NumPy arrays to regular Python lists for JSON serialization
+    for trace in plot_dict.get('data', []):
+        for key in ['x', 'y', 'z']:
+            if key in trace and hasattr(trace[key], 'tolist'):
+                trace[key] = trace[key].tolist()
+    
+    return jsonify(plot_dict)
+
+@app.route('/static/plotly.min.js')
+def serve_plotly():
+    """
+    Serve the local Plotly.js file to avoid CDN blocking issues.
+    """
+    plotly_dir = os.path.dirname(plotly.__file__)
+    plotly_js_path = os.path.join(plotly_dir, 'package_data')
+    return send_from_directory(plotly_js_path, 'plotly.min.js')
 
 # ----------------------------------------------------------------------------
 # Main entry point
