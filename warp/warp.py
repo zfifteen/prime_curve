@@ -46,18 +46,40 @@ class WarpedNumberspace:
         return d_n * math.log(n) / (math.e ** 2)
 
 # Demonstration parameters from prime_number_geometry and lightprimes
-N_POINTS = 1000000
+N_POINTS = 10000
 HELIX_FREQ = 0.1003033  # From main.py, tunable
 
 # Generate data
 n_vals = np.arange(1, N_POINTS + 1)
 primality = np.vectorize(isprime)(n_vals)  # Use SymPy's isprime
+primes = n_vals[primality]
+
+# Precompute scaled prime gaps for each n
+gaps = np.zeros(N_POINTS)
+prev_prime = 2  # First prime
+gap_index = 0
+for n in range(1, N_POINTS + 1):
+    if gap_index < len(primes) and n == primes[gap_index]:
+        if gap_index + 1 < len(primes):
+            actual_gap = primes[gap_index + 1] - n
+        else:
+            actual_gap = primes[gap_index] - primes[gap_index - 1]  # Use last gap for the final prime
+        gaps[n-1] = actual_gap / PI
+        prev_prime = n
+        gap_index += 1
+    else:
+        if gap_index < len(primes):
+            next_prime = primes[gap_index]
+            actual_gap = next_prime - prev_prime
+        else:
+            actual_gap = primes[-1] - primes[-2]  # Use last gap if beyond
+        gaps[n-1] = actual_gap / PI
 
 # Instantiate warped space
 warped_space = WarpedNumberspace()
 
 # Compute y in warped space (no pre-transform; space handles it)
-y = np.array([warped_space(n, N_POINTS, prime_gap=1.0 if not isprime(n) else 2.0) for n in n_vals])
+y = np.array([warped_space(n, N_POINTS, prime_gap=gaps[int(n)-1]) for n in n_vals])
 
 # Z for helix, integrated with frame shifts
 frame_shifts = np.array([warped_space._compute_frame_shift(n, N_POINTS) for n in n_vals])
