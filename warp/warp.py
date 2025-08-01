@@ -46,7 +46,7 @@ class WarpedNumberspace:
         return d_n * math.log(n) / (math.e ** 2)
 
 # Demonstration parameters from prime_number_geometry and lightprimes
-N_POINTS = 100000
+N_POINTS = 1000000
 HELIX_FREQ = 0.1003033  # From main.py, tunable
 
 # Generate data
@@ -72,6 +72,14 @@ x_nonprimes = n_vals[~primality]
 y_nonprimes = y[~primality]
 z_nonprimes = z[~primality]
 
+# Additional insight: Vortex filter from z_metric for efficiency
+def apply_vortex_filter(numbers: np.array) -> np.array:
+    """Eliminate ~71% composites via geometric constraints."""
+    return numbers[(numbers > 3) & (numbers % 2 != 0) & (numbers % 3 != 0)]
+
+filtered_primes = apply_vortex_filter(n_vals[primality])
+print(f"Filtered primes: {len(filtered_primes)} out of {np.sum(primality)}")
+
 # Visualize warped geometry
 fig = plt.figure(figsize=(12, 8))
 ax = fig.add_subplot(111, projection='3d')
@@ -85,13 +93,16 @@ ax.set_zlabel('Helical Coord with Frame Shifts')
 ax.set_title('Warped Prime Geometry: Invariant-Centered Space')
 ax.legend()
 
+# Add custom legend on the left side
+info_text = f"n count: {N_POINTS}\n"
+info_text += f"Universal C: {UNIVERSAL_C:.3f}\n"
+info_text += f"Phi: {PHI:.3f}\n"
+info_text += f"Pi: {PI:.3f}\n"
+info_text += f"Helix Freq: {HELIX_FREQ:.6f}\n"
+info_text += f"Primes found: {np.sum(primality)}\n"
+info_text += f"Filtered primes: {len(filtered_primes)}"
+
+fig.text(0.01, 0.5, info_text, va='center', ha='left', fontsize=10, bbox=dict(facecolor='white', alpha=0.5))
+
 plt.tight_layout()
 plt.show()
-
-# Additional insight: Vortex filter from z_metric for efficiency
-def apply_vortex_filter(numbers: np.array) -> np.array:
-    """Eliminate ~71% composites via geometric constraints."""
-    return numbers[(numbers > 3) & (numbers % 2 != 0) & (numbers % 3 != 0)]
-
-filtered_primes = apply_vortex_filter(n_vals[primality])
-print(f"Filtered primes: {len(filtered_primes)} out of {np.sum(primality)}")
