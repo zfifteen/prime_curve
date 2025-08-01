@@ -2,69 +2,67 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-from sympy import isprime, divisor_count
+from sympy import isprime
 
 # Universal constants from updated knowledge base
-UNIVERSAL_C = (1 + math.sqrt(5)) / 2
-PHI = (1 + math.sqrt(5)) / 2
-PI =   (1 + math.sqrt(5)) / 2
+UNIVERSAL_C = math.e  # Invariant center (c analog)
+PHI = (1 + math.sqrt(5)) / 2  # Golden ratio for resonance
+PI = math.pi  # For gap scaling in Z form
 
 class WarpedNumberspace:
     """
-    Refactored Numberspace that inherently warps around the invariant C.
-    Applies Z = n * (Δ_n / Δmax) directly, where Δ_n is frame shift (e.g., prime gap analog),
-    and Δmax is theoretical max (scaled by π). Frame shifts emanate from C, transforming
-    the number within the space for geodesic prime paths.
-    Integrates curvature κ(n) = d(n) * ln(n) / e² from cognitive-number-theory.
+    Simplified implementation of Z = A(B/C), where A is the observed quantity (n),
+    B is the rate (prime_gap), and C is the invariant.
     """
     def __init__(self, invariant: float = UNIVERSAL_C):
         self._invariant = invariant  # Central origin (C)
 
-    def __call__(self, n: float, max_n: float, prime_gap: float = 1.0) -> float:
+    def __call__(self, n: float, prime_gap: float = 1.0) -> float:
         """
-        Transform n within the warped space: Z = n * (Δ_n / Δmax),
-        where Δ_n = frame_shift(n), Δmax = π * log(max_n).
+        Compute Z = A(B/C), with A = n, B = prime_gap, C = invariant.
         """
         if n <= 1:
             return 0.0
-        delta_n = self._compute_frame_shift(n, max_n)
-        delta_max = PI * math.log(max_n + 1)  # Theoretical max gap analog
-        z_transform = n * (delta_n / delta_max) * prime_gap
-        kappa = self._compute_curvature(n)
-        # return z_transform / math.exp(kappa / self._invariant)  # Warp with curvature
-        # z = a(b/c)
-        return n * (max_n/self._invariant)
-
-    def _compute_frame_shift(self, n: float, max_n: float) -> float:
-        """Frame shift from universal_frame_shift_transformer, centered on invariant."""
-        base_shift = math.log(n) / math.log(max_n)
-        gap_phase = 2 * PI * n / (math.log(n) + 1)
-        oscillation = 0.1 * math.sin(gap_phase)
-        return (base_shift + oscillation) * (1 / self._invariant)  # Emanate from C
-
-    def _compute_curvature(self, n: float) -> float:
-        """κ(n) = d(n) * ln(n) / e² from cognitive-number-theory and z_metric."""
-        d_n = divisor_count(int(n))  # Use SymPy for exact divisor count
-        return d_n * math.log(n) / (math.e ** 2)
+        return n * (prime_gap / self._invariant)
 
 # Demonstration parameters from prime_number_geometry and lightprimes
-N_POINTS = 5000
-# HELIX_FREQ = 0.1003033  # From main.py, tunable
-HELIX_FREQ = (1 + math.sqrt(5)) / 2
+N_POINTS = 6000
+HELIX_FREQ = 1 / (2 * PI * PHI)  # Optimized with golden ratio for resonance
 
 # Generate data
 n_vals = np.arange(1, N_POINTS + 1)
 primality = np.vectorize(isprime)(n_vals)  # Use SymPy's isprime
+primes = n_vals[primality]
+
+# Precompute scaled prime gaps for each n
+gaps = np.zeros(N_POINTS)
+prev_prime = 2  # First prime
+gap_index = 0
+for n in range(1, N_POINTS + 1):
+    if gap_index < len(primes) and n == primes[gap_index]:
+        if gap_index + 1 < len(primes):
+            actual_gap = primes[gap_index + 1] - n
+        else:
+            actual_gap = primes[gap_index] - primes[gap_index - 1]  # Use last gap for the final prime
+        gaps[n-1] = actual_gap / PI
+        prev_prime = n
+        gap_index += 1
+    else:
+        if gap_index < len(primes):
+            next_prime = primes[gap_index]
+            actual_gap = next_prime - prev_prime
+        else:
+            actual_gap = primes[-1] - primes[-2]  # Use last gap if beyond
+        gaps[n-1] = actual_gap / PI
 
 # Instantiate warped space
 warped_space = WarpedNumberspace()
 
 # Compute y in warped space (no pre-transform; space handles it)
-y = np.array([warped_space(n, N_POINTS, prime_gap=1.0 if not isprime(n) else 2.0) for n in n_vals])
+y = np.array([warped_space(n, gaps[int(n)-1]) for n in n_vals])
 
-# Z for helix, integrated with frame shifts
-frame_shifts = np.array([warped_space._compute_frame_shift(n, N_POINTS) for n in n_vals])
-z = np.sin(PI * HELIX_FREQ * n_vals) * (1 + 0.5 * frame_shifts)
+# Z for helix
+z = np.sin(PI * HELIX_FREQ * n_vals)
 
 # Split primes vs non-primes
 x_primes = n_vals[primality]
@@ -89,6 +87,9 @@ ax = fig.add_subplot(111, projection='3d')
 
 ax.scatter(x_nonprimes, y_nonprimes, z_nonprimes, c='blue', alpha=0.3, s=10, label='Non-primes')
 ax.scatter(x_primes, y_primes, z_primes, c='red', marker='*', s=50, label='Primes')
+
+# Connect consecutive primes with lines
+ax.plot(x_primes, y_primes, z_primes, 'r-', alpha=0.5, linewidth=1, label='Prime Trajectories')
 
 ax.set_xlabel('n (Position)')
 ax.set_ylabel('Warped Value (Z-Transform)')
