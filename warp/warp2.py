@@ -3,11 +3,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from sympy import isprime, divisor_count
+from scipy.special import zeta
 
 # Universal constants from updated knowledge base
-UNIVERSAL_C = (1 + math.sqrt(5)) / 2
-PHI = (1 + math.sqrt(5)) / 2
-PI =   (1 + math.sqrt(5)) / 2
+UNIVERSAL_C = 1  # Invariant center (c analog)
+PHI = 2  # Golden ratio for resonance
+PI = 1 # For gap scaling in Z form
 
 class WarpedNumberspace:
     """
@@ -31,9 +32,7 @@ class WarpedNumberspace:
         delta_max = PI * math.log(max_n + 1)  # Theoretical max gap analog
         z_transform = n * (delta_n / delta_max) * prime_gap
         kappa = self._compute_curvature(n)
-        # return z_transform / math.exp(kappa / self._invariant)  # Warp with curvature
-        # z = a(b/c)
-        return n * (max_n/self._invariant)
+        return z_transform / math.exp(kappa / self._invariant)  # Warp with curvature
 
     def _compute_frame_shift(self, n: float, max_n: float) -> float:
         """Frame shift from universal_frame_shift_transformer, centered on invariant."""
@@ -47,20 +46,49 @@ class WarpedNumberspace:
         d_n = divisor_count(int(n))  # Use SymPy for exact divisor count
         return d_n * math.log(n) / (math.e ** 2)
 
+# ==================== ENHANCED VISUALIZATION ====================
 # Demonstration parameters from prime_number_geometry and lightprimes
-N_POINTS = 5000
-# HELIX_FREQ = 0.1003033  # From main.py, tunable
-HELIX_FREQ = (1 + math.sqrt(5)) / 2
+N_POINTS = 6000
+HELIX_FREQ = 10  # Optimized with golden ratio for resonance
 
 # Generate data
 n_vals = np.arange(1, N_POINTS + 1)
 primality = np.vectorize(isprime)(n_vals)  # Use SymPy's isprime
+primes = n_vals[primality]
+
+# Precompute scaled prime gaps for each n
+gaps = np.zeros(N_POINTS)
+prev_prime = 2  # First prime
+gap_index = 0
+for n in range(1, N_POINTS + 1):
+    if gap_index < len(primes) and n == primes[gap_index]:
+        if gap_index == 0:
+            gaps[n-1] = 1.0  # Gap before first prime
+        elif gap_index + 1 < len(primes):
+            actual_gap = primes[gap_index] - primes[gap_index - 1]
+        else:
+            actual_gap = primes[gap_index] - primes[gap_index - 1]
+        prev_prime = n
+        gap_index += 1
+    else:
+        if gap_index < len(primes):
+            next_prime = primes[gap_index]
+            actual_gap = next_prime - prev_prime
+        else:
+            actual_gap = primes[-1] - primes[-2]
+        gaps[n-1] = actual_gap
+
+# Compute actual prime gaps for coloring
+prime_gaps = np.zeros_like(primes, dtype=float)
+for i in range(1, len(primes)):
+    prime_gaps[i] = primes[i] - primes[i-1]
+prime_gaps[0] = prime_gaps[1]  # Set first gap to match second
 
 # Instantiate warped space
 warped_space = WarpedNumberspace()
 
 # Compute y in warped space (no pre-transform; space handles it)
-y = np.array([warped_space(n, N_POINTS, prime_gap=1.0 if not isprime(n) else 2.0) for n in n_vals])
+y = np.array([warped_space(n, N_POINTS, prime_gap=gaps[int(n)-1]) for n in n_vals])
 
 # Z for helix, integrated with frame shifts
 frame_shifts = np.array([warped_space._compute_frame_shift(n, N_POINTS) for n in n_vals])
@@ -75,7 +103,13 @@ x_nonprimes = n_vals[~primality]
 y_nonprimes = y[~primality]
 z_nonprimes = z[~primality]
 
-# Additional insight: Vortex filter from z_metric for efficiency
+# Compute divisor counts for non-primes
+div_counts = np.vectorize(divisor_count)(x_nonprimes)
+
+# Compute Riemann zeta values along the critical line for primes
+zeta_values = np.real(zeta(0.5 + 1j * y_primes))
+
+# Vortex filter for efficiency
 def apply_vortex_filter(numbers: np.array) -> np.array:
     """Eliminate ~71% composites via geometric constraints."""
     return numbers[(numbers > 3) & (numbers % 2 != 0) & (numbers % 3 != 0)]
@@ -83,20 +117,55 @@ def apply_vortex_filter(numbers: np.array) -> np.array:
 filtered_primes = apply_vortex_filter(n_vals[primality])
 print(f"Filtered primes: {len(filtered_primes)} out of {np.sum(primality)}")
 
-# Visualize warped geometry
-fig = plt.figure(figsize=(12, 8))
+# Create enhanced visualization
+fig = plt.figure(figsize=(16, 12))
 ax = fig.add_subplot(111, projection='3d')
 
-ax.scatter(x_nonprimes, y_nonprimes, z_nonprimes, c='blue', alpha=0.3, s=10, label='Non-primes')
-ax.scatter(x_primes, y_primes, z_primes, c='red', marker='*', s=50, label='Primes')
+# Plot non-primes colored by divisor count
+sc_nonprimes = ax.scatter(
+    x_nonprimes,
+    y_nonprimes,
+    z_nonprimes,
+    c="blue",
+    alpha=0.4,
+    s=8,
+    label='Non-primes'
+)
+
+# Plot primes colored by gap size
+sc_primes = ax.scatter(
+    x_primes,
+    y_primes,
+    z_primes,
+    c="red",
+    marker='*',
+    s=50,
+    label='Primes'
+)
+
+# Add Riemann zeta surface
+ax.plot_trisurf(
+    x_primes,
+    y_primes,
+    zeta_values,
+    cmap='twilight',
+    alpha=0.3,
+    label='Riemann Zeta'
+)
 
 ax.set_xlabel('n (Position)')
 ax.set_ylabel('Warped Value (Z-Transform)')
 ax.set_zlabel('Helical Coord with Frame Shifts')
-ax.set_title('Warped Prime Geometry: Invariant-Centered Space')
+ax.set_title(f'Warped Prime Geometry (Enhanced): {N_POINTS} Points')
 ax.legend()
 
-# Add custom legend on the left side
+# Add colorbars
+cbar_nonprimes = fig.colorbar(sc_nonprimes, ax=ax, pad=0.1)
+cbar_nonprimes.set_label('Divisor Count (Non-primes)')
+cbar_primes = fig.colorbar(sc_primes, ax=ax, pad=0.15)
+cbar_primes.set_label('Prime Gap Size (Primes)')
+
+# Add info box
 info_text = f"n count: {N_POINTS}\n"
 info_text += f"Universal C: {UNIVERSAL_C:.3f}\n"
 info_text += f"Phi: {PHI:.3f}\n"
@@ -105,7 +174,9 @@ info_text += f"Helix Freq: {HELIX_FREQ:.6f}\n"
 info_text += f"Primes found: {np.sum(primality)}\n"
 info_text += f"Filtered primes: {len(filtered_primes)}"
 
-fig.text(0.01, 0.5, info_text, va='center', ha='left', fontsize=10, bbox=dict(facecolor='white', alpha=0.5))
+fig.text(0.05, 0.7, info_text, va='center', ha='left', fontsize=10,
+         bbox=dict(facecolor='white', alpha=0.7))
 
 plt.tight_layout()
+plt.savefig(f'enhanced_prime_geometry_{N_POINTS}.png', dpi=300)
 plt.show()
