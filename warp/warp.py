@@ -2,6 +2,7 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+from sympy import isprime, divisor_count
 
 # Universal constants from updated knowledge base
 UNIVERSAL_C = math.e  # Invariant center (c analog)
@@ -41,38 +42,22 @@ class WarpedNumberspace:
 
     def _compute_curvature(self, n: float) -> float:
         """κ(n) = d(n) * ln(n) / e² from cognitive-number-theory and z_metric."""
-        d_n = self._divisor_count(int(n))  # Approximate d(n)
+        d_n = divisor_count(int(n))  # Use SymPy for exact divisor count
         return d_n * math.log(n) / (math.e ** 2)
 
-    def _divisor_count(self, n: int) -> int:
-        """Simple divisor count for κ(n)."""
-        count = 0
-        for i in range(1, int(math.sqrt(n)) + 1):
-            if n % i == 0:
-                count += 1 if i == n // i else 2
-        return count
-
 # Demonstration parameters from prime_number_geometry and lightprimes
-N_POINTS = 5000
+N_POINTS = 100000
 HELIX_FREQ = 0.1003033  # From main.py, tunable
-
-def is_prime(n: int) -> bool:
-    if n < 2:
-        return False
-    for i in range(2, int(math.sqrt(n)) + 1):
-        if n % i == 0:
-            return False
-    return True
 
 # Generate data
 n_vals = np.arange(1, N_POINTS + 1)
-primality = np.vectorize(is_prime)(n_vals)
+primality = np.vectorize(isprime)(n_vals)  # Use SymPy's isprime
 
 # Instantiate warped space
 warped_space = WarpedNumberspace()
 
 # Compute y in warped space (no pre-transform; space handles it)
-y = np.array([warped_space(n, N_POINTS, prime_gap=1.0 if not is_prime(n) else 2.0) for n in n_vals])
+y = np.array([warped_space(n, N_POINTS, prime_gap=1.0 if not isprime(n) else 2.0) for n in n_vals])
 
 # Z for helix, integrated with frame shifts
 frame_shifts = np.array([warped_space._compute_frame_shift(n, N_POINTS) for n in n_vals])
