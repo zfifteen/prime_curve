@@ -68,7 +68,25 @@ warnings.filterwarnings("ignore")
 # 1. Constants and primes
 # ------------------------------------------------------------------------------
 phi = (1 + np.sqrt(5)) / 2
+
+# PERFORMANCE WARNING: Setting N_MAX to large values can cause significant performance issues!
+# - SymPy's sieve.primerange() becomes slow for N_MAX > 50,000 
+# - The Mersenne prime computation uses isprime(2^p - 1) which becomes extremely slow
+#   for large primes p (e.g., p=607 requires checking a 183-digit number)
+# - Memory usage increases significantly with larger prime lists
+# - For N_MAX > 10,000, consider using smaller values or expect long computation times
 N_MAX = 1000  # Updated from 20,000 to 100,000
+
+# Runtime warning for large N_MAX values
+if N_MAX > 10000:
+    warnings.warn(
+        f"N_MAX={N_MAX} is large and may cause significant performance issues. "
+        f"SymPy's sieve and isprime operations on large numbers can be very slow. "
+        f"Consider using N_MAX <= 10000 for reasonable performance.",
+        UserWarning,
+        stacklevel=2
+    )
+
 primes_list = list(sieve.primerange(2, N_MAX + 1))
 
 
@@ -197,6 +215,13 @@ for entry in valid_results[::10]:
 # 5. Dynamically Compute and Validate Mersenne Primes
 # ------------------------------------------------------------------------------
 def compute_mersenne_primes(n_max):
+    """
+    Compute Mersenne primes up to n_max.
+    
+    PERFORMANCE WARNING: This function uses isprime(2^p - 1) which becomes
+    extremely slow for large primes p. Even moderate values like p=607 
+    require checking 183-digit numbers. Use with caution for n_max > 1000.
+    """
     primes = [p for p in sieve.primerange(2, n_max + 1)]
     return [p for p in primes if isprime(2 ** p - 1)]
 
