@@ -10,7 +10,7 @@ Enhancements over the previous version:
 5. Correct best‐k selection: ignore NaN/-inf enhancements.
 
 Usage:
-    python proof_refined_fixed.py
+    python proof.py
 
 Dependencies:
     numpy, scipy, sklearn, sympy
