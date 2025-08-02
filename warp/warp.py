@@ -1,8 +1,7 @@
 import math
 import numpy as np
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-from sympy import isprime
+import plotly.graph_objects as go
+from sympy import isprime, divisor_count
 
 # Universal constants from updated knowledge base
 UNIVERSAL_C = math.e  # Invariant center (c analog)
@@ -26,7 +25,7 @@ class WarpedNumberspace:
         return n * (prime_gap / self._invariant)
 
 # Demonstration parameters from prime_number_geometry and lightprimes
-N_POINTS = 6000
+N_POINTS = 100000
 HELIX_FREQ = 1 / (2 * PI * PHI)  # Optimized with golden ratio for resonance
 
 # Generate data
@@ -61,8 +60,12 @@ warped_space = WarpedNumberspace()
 # Compute y in warped space (no pre-transform; space handles it)
 y = np.array([warped_space(n, gaps[int(n)-1]) for n in n_vals])
 
-# Z for helix
-z = np.sin(PI * HELIX_FREQ * n_vals)
+# Compute κ(n) for curvature scaling
+kappa = np.array([divisor_count(int(n)) * math.log(n + 1) / (math.e ** 2) if n > 1 else 0.0 for n in n_vals])  # Ensure float
+
+# Z for helix, scaled by curvature to emphasize low-κ primes as peaks
+z_base = np.sin(PI * HELIX_FREQ * n_vals)
+z = z_base * np.exp(-kappa)  # Low kappa → higher z (peaks), high kappa → lower z (distort down)
 
 # Split primes vs non-primes
 x_primes = n_vals[primality]
@@ -73,6 +76,12 @@ x_nonprimes = n_vals[~primality]
 y_nonprimes = y[~primality]
 z_nonprimes = z[~primality]
 
+# Subsample non-primes for performance (e.g., 10% for density)
+subsample_idx = np.random.choice(len(x_nonprimes), size=int(len(x_nonprimes) * 0.1), replace=False)
+x_nonprimes_sub = x_nonprimes[subsample_idx]
+y_nonprimes_sub = y_nonprimes[subsample_idx]
+z_nonprimes_sub = z_nonprimes[subsample_idx]
+
 # Additional insight: Vortex filter from z_metric for efficiency
 def apply_vortex_filter(numbers: np.array) -> np.array:
     """Eliminate ~71% composites via geometric constraints."""
@@ -81,32 +90,62 @@ def apply_vortex_filter(numbers: np.array) -> np.array:
 filtered_primes = apply_vortex_filter(n_vals[primality])
 print(f"Filtered primes: {len(filtered_primes)} out of {np.sum(primality)}")
 
-# Visualize warped geometry
-fig = plt.figure(figsize=(12, 8))
-ax = fig.add_subplot(111, projection='3d')
+# Visualize with Plotly for interactivity
+fig = go.Figure()
 
-ax.scatter(x_nonprimes, y_nonprimes, z_nonprimes, c='blue', alpha=0.3, s=10, label='Non-primes')
-ax.scatter(x_primes, y_primes, z_primes, c='red', marker='*', s=50, label='Primes')
+# Add non-primes (subsampled)
+fig.add_trace(go.Scatter3d(
+    x=x_nonprimes_sub,
+    y=y_nonprimes_sub,
+    z=z_nonprimes_sub,
+    mode='markers',
+    marker=dict(size=2, color='blue', opacity=0.3),
+    name='Non-primes'
+))
+
+# Add primes
+fig.add_trace(go.Scatter3d(
+    x=x_primes,
+    y=y_primes,
+    z=z_primes,
+    mode='markers',
+    marker=dict(size=5, color='red', symbol='circle'),
+    name='Primes'
+))
 
 # Connect consecutive primes with lines
-ax.plot(x_primes, y_primes, z_primes, 'r-', alpha=0.5, linewidth=1, label='Prime Trajectories')
+fig.add_trace(go.Scatter3d(
+    x=x_primes,
+    y=y_primes,
+    z=z_primes,
+    mode='lines',
+    line=dict(color='red', width=2),
+    opacity=0.5,
+    name='Prime Trajectories'
+))
 
-ax.set_xlabel('n (Position)')
-ax.set_ylabel('Warped Value (Z-Transform)')
-ax.set_zlabel('Helical Coord with Frame Shifts')
-ax.set_title('Warped Prime Geometry: Invariant-Centered Space')
-ax.legend()
+# Update layout
+fig.update_layout(
+    title='Warped Prime Geometry: Invariant-Centered Space',
+    scene=dict(
+        xaxis_title='n (Position)',
+        yaxis_title='Warped Value (Z-Transform)',
+        zaxis_title='Helical Coord with Curvature Scaling'
+    ),
+    legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01)
+)
 
-# Add custom legend on the left side
-info_text = f"n count: {N_POINTS}\n"
-info_text += f"Universal C: {UNIVERSAL_C:.3f}\n"
-info_text += f"Phi: {PHI:.3f}\n"
-info_text += f"Pi: {PI:.3f}\n"
-info_text += f"Helix Freq: {HELIX_FREQ:.6f}\n"
-info_text += f"Primes found: {np.sum(primality)}\n"
-info_text += f"Filtered primes: {len(filtered_primes)}"
+# Add custom annotation for info
+info_text = f"n count: {N_POINTS}<br>Universal C: {UNIVERSAL_C:.3f}<br>Phi: {PHI:.3f}<br>Pi: {PI:.3f}<br>Helix Freq: {HELIX_FREQ:.6f}<br>Primes found: {np.sum(primality)}<br>Filtered primes: {len(filtered_primes)}"
+fig.add_annotation(
+    text=info_text,
+    xref="paper", yref="paper",
+    x=0.01, y=0.5,
+    showarrow=False,
+    font=dict(size=10),
+    align="left",
+    bgcolor="white",
+    opacity=0.8
+)
 
-fig.text(0.01, 0.5, info_text, va='center', ha='left', fontsize=10, bbox=dict(facecolor='white', alpha=0.5))
-
-plt.tight_layout()
-plt.show()
+fig.show()
